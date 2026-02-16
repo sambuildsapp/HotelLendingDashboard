@@ -4,52 +4,45 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Diagnostic log for Vercel logs
-    console.log(`Middleware processing path: ${pathname}`);
+    // Diagnostic log for Vercel logs - helps identify if middleware is even firing
+    console.log(`[Middleware] Processing: ${pathname}`);
 
-    // Paths that should be accessible without an access code
-    const publicPaths = [
-        '/access-code',
-        '/api/verify-code',
-        '/_next',
-        '/favicon.ico',
-    ];
+    // Define public paths that DON'T need protection
+    const isPublic =
+        pathname.startsWith('/access-code') ||
+        pathname.startsWith('/api/verify-code') ||
+        pathname.startsWith('/_next') ||
+        pathname === '/favicon.ico' ||
+        pathname.includes('.'); // Usually static files like .png, .jpg, etc.
 
-    // Check if the path is public or a static asset
-    const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
-    const isStaticAsset = pathname.includes('.');
+    let response;
 
-    if (isPublicPath || isStaticAsset) {
-        return NextResponse.next();
+    if (isPublic) {
+        response = NextResponse.next();
+    } else {
+        // Check for the access cookie
+        const authAccess = request.cookies.get('auth_access');
+
+        if (!authAccess) {
+            console.log(`[Middleware] Unauthorized access to ${pathname} - Redirecting to /access-code`);
+            const url = request.nextUrl.clone();
+            url.pathname = '/access-code';
+            url.searchParams.set('callbackUrl', pathname);
+            response = NextResponse.redirect(url);
+        } else {
+            response = NextResponse.next();
+        }
     }
 
-    // Check for the access cookie
-    const authAccess = request.cookies.get('auth_access');
+    // ADD DIAGNOSTIC HEADER TO ALL RESPONSES
+    // This makes it VERY easy to debug: just check headers in the browser Network tab.
+    response.headers.set('x-middleware-debug', 'active');
 
-    if (!authAccess) {
-        console.log(`Redirecting unauthorized access to /access-code from ${pathname}`);
-        const url = request.nextUrl.clone();
-        url.pathname = '/access-code';
-        url.searchParams.set('callbackUrl', pathname);
-        const response = NextResponse.redirect(url);
-        response.headers.set('x-middleware-active', 'true');
-        return response;
-    }
-
-    const response = NextResponse.next();
-    response.headers.set('x-middleware-active', 'true');
     return response;
 }
 
+// Simple matcher to ensure it's not skipped. 
+// We handle specific logic inside the function for maximum control.
 export const config = {
-    matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - api (API routes)
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         */
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    ],
+    matcher: '/((?!_next/static|_next/image|favicon.ico).*)',
 };
