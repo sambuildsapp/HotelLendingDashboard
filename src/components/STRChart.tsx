@@ -90,7 +90,7 @@ export function OccupancyComparisonChart({ data, title = 'Occupancy: Property vs
                     <Tooltip
                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                         labelStyle={{ color: '#f1f5f9' }}
-                        formatter={(value: number) => `${value}%`}
+                        formatter={(value: any) => `${value}%`}
                     />
                     <Legend wrapperStyle={{ color: '#f1f5f9' }} />
                     <Line type="monotone" dataKey="My Property" stroke="#22d3ee" strokeWidth={2} dot={false} />
@@ -122,7 +122,7 @@ export function ADRComparisonChart({ data, title = 'ADR: Property vs Comp Set' }
                     <Tooltip
                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                         labelStyle={{ color: '#f1f5f9' }}
-                        formatter={(value: number) => `$${value}`}
+                        formatter={(value: any) => `$${value}`}
                     />
                     <Legend wrapperStyle={{ color: '#f1f5f9' }} />
                     <Line type="monotone" dataKey="My Property" stroke="#22d3ee" strokeWidth={2} dot={false} />
