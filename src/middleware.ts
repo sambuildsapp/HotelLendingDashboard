@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/request';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+
+    // Diagnostic log for Vercel logs
+    console.log(`Middleware processing path: ${pathname}`);
 
     // Paths that should be accessible without an access code
     const publicPaths = [
@@ -24,14 +27,18 @@ export function middleware(request: NextRequest) {
     const authAccess = request.cookies.get('auth_access');
 
     if (!authAccess) {
+        console.log(`Redirecting unauthorized access to /access-code from ${pathname}`);
         const url = request.nextUrl.clone();
         url.pathname = '/access-code';
-        // Store the intended destination to redirect back after verification
         url.searchParams.set('callbackUrl', pathname);
-        return NextResponse.redirect(url);
+        const response = NextResponse.redirect(url);
+        response.headers.set('x-middleware-active', 'true');
+        return response;
     }
 
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('x-middleware-active', 'true');
+    return response;
 }
 
 export const config = {
