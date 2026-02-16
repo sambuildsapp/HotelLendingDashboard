@@ -6,11 +6,21 @@ import { formatPercent, formatCurrency } from '@/lib/calculations';
 import { STRIndexCards, PerformanceMetrics } from '@/components/STRIndexCards';
 import { RGITrendChart, OccupancyComparisonChart, ADRComparisonChart } from '@/components/STRChart';
 
+import { type Hotel, type MarketData } from '@/lib/types';
+
+interface HotelMarketSummary {
+    hotel: Hotel;
+    latestData: MarketData;
+    mpi: number;
+    ari: number;
+    rgi: number;
+}
+
 export default function MarketPage() {
     const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
 
     // Get summary data for each hotel (latest month)
-    const hotelSummaries = mockHotels.map(hotel => {
+    const hotelSummaries: HotelMarketSummary[] = mockHotels.map(hotel => {
         const latestData = getLatestMarketData(hotel.id);
         if (!latestData) return null;
 
@@ -31,7 +41,7 @@ export default function MarketPage() {
             ari,
             rgi,
         };
-    }).filter(Boolean) as NonNullable<typeof hotelSummaries[0]>[];
+    }).filter((item): item is HotelMarketSummary => item !== null);
 
     // Get detailed data for selected hotel
     const selectedHotel = selectedHotelId
